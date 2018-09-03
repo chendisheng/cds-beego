@@ -3,9 +3,8 @@ package logagent
 import(
 	"fmt"
 	"errors"
-	"github.com/astaxie/beego/config"
-	"cds-beego/logagent/tailf"
 	"github.com/astaxie/beego"
+	"strconv"
 )
 
 var (
@@ -18,78 +17,52 @@ type Config struct {
 
 	chanSize int
 	kafkaAddr string
-	collectConf []tailf.CollectConf
+	collectConf []CollectConf
 }
 
-func loadCollectConf(conf config.Configer) (err error ) {
-
-	var cc tailf.CollectConf
-	cc.LogPath = conf.String("collect::log_path")
-	if len(cc.LogPath) == 0 {
-		err = errors.New("invalid collect::log_path")
-		return
-	}
-
-	cc.Topic = conf.String("collect::topic")
-	if len(cc.LogPath) == 0 {
-		err = errors.New("invalid collect::topic")
-		return
-	}
-
-	appConfig.collectConf = append(appConfig.collectConf, cc)
-	beego.Info("配置项目%v",appConfig)
-	return
-}
-
-/*
-    加载配置文件信息
-    [logs]
-    log_level=debug
-    log_path=E:\golang\go_pro\logs\logagent.log
-    [collect]
-    log_path=E:\golang\go_pro\logs\logagent.log
-    topic=nginx_log
-
-    chan_size=100
-    [kafka]
-    server_addr=192.168.21.8:9092
-*/
-func loadConf(confType, filename string) (err error) {
-
-	conf, err := config.NewConfig(confType, filename)
-	if err != nil {
-		fmt.Println("new config failed, err:", err)
-		return
-	}
+func init(){
 	/*定义一个全局变量保存
 	var appConfig *Config
 	*/
 	appConfig = &Config{}
-	appConfig.logLevel = conf.String("logs::log_level")
+	appConfig.logLevel = beego.AppConfig.String("logs::log_level")
 	if len(appConfig.logLevel) == 0 {
 		appConfig.logLevel = "debug"
 	}
 
-	appConfig.logPath = conf.String("logs::log_path")
+	appConfig.logPath = beego.AppConfig.String("log_path")
 	if len(appConfig.logPath) == 0 {
-		appConfig.logPath = "E:\\workspace\\gopath\\src\\cds-beego\\logs\\logagent.log"
+		appConfig.logPath = "./logs/cds-beego.log"
 	}
 
-	appConfig.chanSize, err = conf.Int("collect::chan_size")
+	size , err := strconv.Atoi(beego.AppConfig.String("log_chan_size"))
 	if err != nil {
 		appConfig.chanSize = 100
+	}else{
+		appConfig.chanSize  = size
 	}
 
-	appConfig.kafkaAddr = conf.String("kafka::server_addr")
+
+	appConfig.kafkaAddr = beego.AppConfig.String("log_kafa_address")
 	if len(appConfig.kafkaAddr) == 0 {
 		err = fmt.Errorf("invalid kafka addr")
 		return
 	}
 
-	err = loadCollectConf(conf)
-	if err != nil {
-		fmt.Printf("load collect conf failed, err:%v\n", err)
+	var cc CollectConf
+	cc.LogPath = beego.AppConfig.String("log_collect_path")
+	if len(cc.LogPath) == 0 {
+		err = errors.New("invalid log_collect_path")
 		return
 	}
-	return
+
+	cc.Topic = beego.AppConfig.String("log_topic")
+	if len(cc.LogPath) == 0 {
+		err = errors.New("invalid log_topic")
+		return
+	}
+	appConfig.collectConf = append(appConfig.collectConf, cc)
+	beego.Info("配置项目%v",appConfig)
+	/*先测试将log输出配置正确，输出到logagent.log中*/
+	beego.Debug("load conf succ, config:%v", appConfig)
 }

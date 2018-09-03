@@ -19,7 +19,7 @@ func init(){
 
 func initLogConifg(){
 	log := logs.NewLogger()
-	logs.SetLogger(logs.AdapterFile, `{"filename":"logs/logagent.log"}`)
+	logs.SetLogger(logs.AdapterFile, `{"filename":"logs/cds-beego.log"}`)
 	log.Debug("this is a debug message")
 }
 
