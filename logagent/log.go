@@ -18,7 +18,7 @@ func init(){
 		logs.Error("initLogger failed, marshal err:",err)
 		return
 	}
-	logs.SetLogger(logs.AdapterFile, string(configStr))
+	//logs.SetLogger(logs.AdapterFile, string(configStr))
 	logs.Info("initLogger config:",string(configStr))
 
 }
