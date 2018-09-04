@@ -9,7 +9,7 @@ import (
 	"github.com/Shopify/sarama"
 )
 
-//// Name for adapter with beego official support
+// Name for adapter with beego official support
 const (
 	AdapterKafka   = "kafka"
 )
@@ -31,19 +31,16 @@ func newKAFKAWriter() beelog.Logger {
 
 // Init KAFKAWriter with json config string
 func (s *KAFKAWriter) Init(jsonconfig string) error {
-	fmt.Println("初始化 kafkaWriter")
 	err := json.Unmarshal([]byte(jsonconfig), s)
 	if err != nil {
 		return err
 	}
-
 	err = s.initKafka()
-	fmt.Println("初始化 kafkaWriter 成功")
 	return err
 }
 
 // WriteMsg write message in smtp writer.
-// it will send an email with subject and only this message.
+// it will send message to kafka.
 func (s *KAFKAWriter) WriteMsg(when time.Time, msg string, level int) error {
 	if level > s.Level {
 		return nil
@@ -64,7 +61,7 @@ func(s *KAFKAWriter) initKafka() error{
 	var err error
 	client, err = sarama.NewSyncProducer([]string{addr}, config)
 	if err != nil {
-		log.Println("init kafka producer failed, err:", err)
+		fmt.Errorf("init kafka producer failed, err:", err)
 		return err
 	}
 	return err
@@ -74,20 +71,14 @@ func(s *KAFKAWriter) initKafka() error{
 发送到kafak
 */
 func (k *KAFKAWriter)SendToKafka(data, topic string)(err error) {
-
 	msg := &sarama.ProducerMessage{}
 	msg.Topic = topic
 	msg.Value = sarama.StringEncoder(data)
-
-	fmt.Println("client配置%+v",client)
-
-	pid, offset, err := client.SendMessage(msg)
-	if err != nil {
-		fmt.Println("send message failed, err:%v data:%v topic:%v", err, data, topic)
+	_, _, err = client.SendMessage(msg)
+	if err != nil{
+		fmt .Errorf("send message failed, err:%v data:%v topic:%v", err, data, topic)
 		return
 	}
-
-	fmt.Println("send succ, pid:%v offset:%v, topic:%v\n", pid, offset, topic)
 	return
 }
 
